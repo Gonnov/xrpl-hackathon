@@ -70,7 +70,6 @@ export class MultisigService {
                 Destination: RECEIVER_ADDRESS!,
                 Amount: '1'
             }, 3);
-            // const signed1 = mainWallet.sign(preparedPayment, true);
             const signed2 = signer_wallet.sign(preparedPayment, true);
             const signed3 = issuer_wallet.sign(preparedPayment, true);
             const combinedTransaction = multisign([signed2.tx_blob, signed3.tx_blob]);

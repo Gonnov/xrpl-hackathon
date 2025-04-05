@@ -16,3 +16,18 @@ export const escrowApi = {
         return response.data;
     },
 };
+
+
+// Transaction API functions
+export const transactionApi = {
+    createTransaction: async (data: {
+        transaction_id: string;
+        business_partner: string;
+        product_name: string;
+        quantity: string;
+        price: string;
+    }) => {
+        const response = await api.post("/transaction/create", data);
+        return response.data;
+    }
+};

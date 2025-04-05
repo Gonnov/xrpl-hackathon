@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useTransactionStore } from "@/stores/useTransactionStore";
 import { escrowApi } from "@/services/api";
+import { transactionApi } from "@/services/api";
 
 export const PaymentPage = () => {
     const navigate = useNavigate();
@@ -58,8 +59,16 @@ export const PaymentPage = () => {
                 description:
                     "Your payment has been processed and the funds are now in escrow.",
             });
-
+            // Create transaction record
+            await transactionApi.createTransaction({
+                transaction_id: response.transaction_id,
+                business_partner: partner.name,
+                product_name: details.productName,
+                quantity: details.quantity,
+                price: details.contractValue,
+            });
             setIsLoading(false);
+
             navigate("/summary");
         } catch (error) {
             console.error("Failed to fund escrow:", error);

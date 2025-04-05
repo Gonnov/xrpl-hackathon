@@ -6,6 +6,7 @@ import { DocumentsUpload } from "./screens/Documents/DocumentsUpload";
 import { Notification } from "./screens/Notification";
 import { ContractFormPage } from "./screens/ContractFormPage";
 import { PaymentPage } from "./screens/PaymentPage";
+import { FinancingPage } from "./screens/FinancingPage";
 import { Summary } from "./screens/Summary";
 import { Dashboard } from "./screens/Dashboard";
 import { Toaster } from "./components/Toaster";
@@ -19,6 +20,7 @@ createRoot(document.getElementById("app") as HTMLElement).render(
         <Route path="/notification" element={<Notification />} />
         <Route path="/documents" element={<DocumentsUpload />} />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/financing" element={<FinancingPage />} />
         <Route path="/verification" element={<NewBl />} />
         <Route path="/summary" element={<Summary />} />
       </Routes>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BillOfLadingSection } from "./sections/BillOfLadingSection";
 import { HeaderSection } from "./sections/HeaderSection";
@@ -12,7 +12,13 @@ export const NewBl = (): JSX.Element => {
   const location = useLocation();
   const navigate = useNavigate();
   const uploadedDocuments = location.state?.uploadedDocuments || [];
-  const { setDocumentsVerified } = useTransactionStore();
+  const { setDocumentsVerified, userRole } = useTransactionStore();
+
+  useEffect(() => {
+    if (userRole !== 'Exporter') {
+      navigate('/dashboard');
+    }
+  }, [userRole, navigate]);
 
   const handleContinue = () => {
     setDocumentsVerified(true);

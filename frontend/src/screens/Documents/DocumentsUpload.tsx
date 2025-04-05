@@ -51,7 +51,13 @@ export const DocumentsUpload = () => {
   const navigate = useNavigate();
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [dragOver, setDragOver] = useState<string | null>(null);
-  const { setDocumentsUploaded } = useTransactionStore();
+  const { setDocumentsUploaded, userRole } = useTransactionStore();
+
+  useEffect(() => {
+    if (userRole !== 'Exporter') {
+      navigate('/dashboard');
+    }
+  }, [userRole, navigate]);
 
   const simulateProgress = (docId: string) => {
     const interval = setInterval(() => {

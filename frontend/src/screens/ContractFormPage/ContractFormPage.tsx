@@ -15,7 +15,10 @@ import {
   HelpCircle,
   Info,
   Ship,
-  ShoppingCart
+  ShoppingCart,
+  Wallet,
+  Clock,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -50,7 +53,13 @@ import {
   invoicingModes,
   mockExtractedData
 } from '@/mock/contractData';
-import { useTransactionStore } from '@/stores/useTransactionStore';
+import { useTransactionStore, FundingMethod, RepaymentTerm } from '@/stores/useTransactionStore';
+
+const repaymentOptions = [
+  { term: '30d' as RepaymentTerm, label: '30 days', fee: 5 },
+  { term: '60d' as RepaymentTerm, label: '60 days', fee: 6.5 },
+  { term: '90d' as RepaymentTerm, label: '90 days', fee: 8 },
+];
 
 export const ContractFormPage = () => {
   const navigate = useNavigate();
@@ -97,6 +106,21 @@ export const ContractFormPage = () => {
       [field]: value
     }));
     updateDetails({ [field]: value });
+
+    // Update fee when funding method or repayment term changes
+    if (field === 'fundingMethod') {
+      const newFee = value === 'self' ? 2 : (
+        formData.repaymentTerm 
+          ? repaymentOptions.find(opt => opt.term === formData.repaymentTerm)?.fee 
+          : 5
+      );
+      updateDetails({ calculatedFee: newFee });
+    }
+    
+    if (field === 'repaymentTerm') {
+      const newFee = repaymentOptions.find(opt => opt.term === value)?.fee;
+      updateDetails({ calculatedFee: newFee });
+    }
   };
 
   const handleFileUpload = (event) => {
@@ -159,6 +183,34 @@ export const ContractFormPage = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{role}</h3>
+            <p className="text-sm text-gray-500 mt-1">{description}</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
+  const FundingOptionCard = ({ method, icon, title, description, fee, isSelected, onClick }) => (
+    <div
+      onClick={onClick}
+      className={`cursor-pointer transition-all duration-200 ${
+        isSelected 
+          ? 'ring-2 ring-[#00B0F5] bg-blue-50' 
+          : 'hover:bg-gray-50'
+      }`}
+    >
+      <Card className="p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-lg bg-[#00B0F5] bg-opacity-10 flex items-center justify-center">
+            {icon}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                {fee}% fee
+              </Badge>
+            </div>
             <p className="text-sm text-gray-500 mt-1">{description}</p>
           </div>
         </div>
@@ -274,6 +326,66 @@ export const ContractFormPage = () => {
                         )}
                       </div>
                     </Card>
+
+                    {/* Funding Options (Only for Importers) */}
+                    {userRole === 'Importer' && (
+                      <Card className="p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                          How do you want to fund this transaction?
+                        </h2>
+                        
+                        <div className="space-y-4">
+                          <FundingOptionCard
+                            method="self"
+                            icon={<Wallet className="w-6 h-6 text-[#00B0F5]" />}
+                            title="I will fund the escrow myself"
+                            description="Secure your transaction with a 2% escrow fee"
+                            fee={2}
+                            isSelected={formData.fundingMethod === 'self'}
+                            onClick={() => handleInputChange('fundingMethod', 'self')}
+                          />
+
+                          <FundingOptionCard
+                            method="financed"
+                            icon={<CreditCard className="w-6 h-6 text-[#00B0F5]" />}
+                            title="Use a financing provider"
+                            description="Get immediate financing with flexible repayment terms"
+                            fee={formData.repaymentTerm ? repaymentOptions.find(opt => opt.term === formData.repaymentTerm)?.fee : 5}
+                            isSelected={formData.fundingMethod === 'financed'}
+                            onClick={() => handleInputChange('fundingMethod', 'financed')}
+                          />
+
+                          {formData.fundingMethod === 'financed' && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                              <Label className="mb-2 block">Select repayment term</Label>
+                              <div className="grid grid-cols-3 gap-4">
+                                {repaymentOptions.map((option) => (
+                                  <Card
+                                    key={option.term}
+                                    className={`p-4 cursor-pointer transition-all ${
+                                      formData.repaymentTerm === option.term
+                                        ? 'ring-2 ring-[#00B0F5] bg-blue-50'
+                                        : 'hover:bg-gray-100'
+                                    }`}
+                                    onClick={() => handleInputChange('repaymentTerm', option.term)}
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <Clock className="w-4 h-4 text-gray-400" />
+                                      <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                                        {option.fee}%
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      Repay in {option.label}
+                                    </p>
+                                  </Card>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    )}
 
                     {/* Product Information */}
                     <Card className="p-6">
@@ -671,7 +783,7 @@ export const ContractFormPage = () => {
                               <Label>Policy Number</Label>
                               <Input
                                 value={formData.policyNumber}
-                                onChange={(e) => handleInputChange('policyNumber', e.target.value)}
+                                onChange={(e) => handleInputChange('policyNumber',e.target.value)}
                                 placeholder="Enter policy number"
                               />
                             </div>
@@ -687,56 +799,61 @@ export const ContractFormPage = () => {
                       </h2>
                       
                       <div className="space-y-4">
-                        <div
-                          className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-gray-300"
-                          onClick={() => document.getElementById('contract-upload').click()}
-                        >
-                          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">
-                            Click to upload or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-400">PDF files only</p>
-                          <input
-                            id="contract-upload"
-                            type="file"
-                            className="hidden"
-                            accept=".pdf"
-                            onChange={handleFileUpload}
-                          />
+                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-6">
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600 mb-2">
+                              Drag and drop your contract file here, or click to browse
+                            </p>
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                              id="contract-upload"
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={() => document.getElementById('contract-upload').click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
                         </div>
 
                         {formData.uploadedContract && (
-                          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                            <span className="text-sm text-gray-600">{formData.uploadedContract.name}</span>
-                            <button
-                              onClick={() => handleInputChange('uploadedContract', null)}
-                              className="text-red-500 text-sm hover:text-red-600"
-                            >
-                              Remove
-                            </button>
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <Label>AI-Powered Data Extraction</Label>
+                              <Switch
+                                checked={formData.useAIExtraction}
+                                onCheckedChange={handleAIExtract}
+                              />
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              Let our AI extract and populate contract details automatically
+                            </p>
                           </div>
                         )}
-
-                        <div className="flex items-center justify-between">
-                          <Label>Extract contract details with AI</Label>
-                          <Switch
-                            checked={formData.useAI}
-                            onCheckedChange={handleAIExtract}
-                            disabled={!formData.uploadedContract}
-                          />
-                        </div>
                       </div>
                     </Card>
+
+                    {/* Navigation */}
+                    <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200">
+                      <Button
+                        className="w-full"
+                        onClick={handleContinue}
+                        disabled={!isFormValid()}
+                      >
+                        <span>Continue</span>
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </div>
-
-          <WorkflowNavigation 
-            isValid={isFormValid()} 
-            onContinue={handleContinue}
-          />
         </main>
       </div>
     </div>

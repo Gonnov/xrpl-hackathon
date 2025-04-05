@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { HeaderSection } from "../NewBl/sections/HeaderSection";
 import { NavigationSidebarSection } from "../NewBl/sections/NavigationSidebarSection";
 import { DocumentStepper } from "../NewBl/sections/DocumentStepper";
@@ -10,6 +11,7 @@ import { ShipmentTrackingCard } from "./components/ShipmentTrackingCard";
 import { ShipmentTimelineCard } from "./components/ShipmentTimelineCard";
 import { ContractDetailsCard } from "./components/ContractDetailsCard";
 import { PaymentFlowCard } from "./components/PaymentFlowCard";
+import { useTransactionStore } from "@/stores/useTransactionStore";
 
 const summaryData = {
   transaction: {
@@ -139,6 +141,21 @@ const summaryData = {
 };
 
 export const Summary = () => {
+  const navigate = useNavigate();
+  const { userRole, details, escrowFunded, financingConfirmed, documentsVerified } = useTransactionStore();
+
+  useEffect(() => {
+    // Check if the user has completed the necessary steps
+    const hasValidFlow = userRole === 'Importer'
+      ? (details.fundingMethod === 'financed' ? financingConfirmed : escrowFunded)
+      : documentsVerified;
+
+    if (!hasValidFlow) {
+      console.log('Invalid flow detected, redirecting to dashboard');
+      navigate('/');
+    }
+  }, [userRole, details, escrowFunded, financingConfirmed, documentsVerified, navigate]);
+
   return (
     <div className="h-screen flex flex-col">
       <HeaderSection />

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
 export type UserRole = 'Importer' | 'Exporter' | null;
+export type FundingMethod = 'self' | 'financed';
+export type RepaymentTerm = '30d' | '60d' | '90d';
 
 interface Partner {
   id: string;
@@ -36,6 +38,9 @@ interface TransactionDetails {
   isInsured: boolean;
   insuranceProvider: string;
   policyNumber: string;
+  fundingMethod: FundingMethod;
+  repaymentTerm: RepaymentTerm | null;
+  calculatedFee: number;
 }
 
 interface TransactionState {
@@ -46,6 +51,7 @@ interface TransactionState {
   escrowFunded: boolean;
   documentsUploaded: boolean;
   documentsVerified: boolean;
+  financingConfirmed: boolean;
 }
 
 interface TransactionActions {
@@ -56,6 +62,7 @@ interface TransactionActions {
   setEscrowFunded: (funded: boolean) => void;
   setDocumentsUploaded: (uploaded: boolean) => void;
   setDocumentsVerified: (verified: boolean) => void;
+  setFinancingConfirmed: (confirmed: boolean) => void;
   resetTransaction: () => void;
 }
 
@@ -84,6 +91,9 @@ const initialDetails: TransactionDetails = {
   isInsured: false,
   insuranceProvider: '',
   policyNumber: '',
+  fundingMethod: 'self',
+  repaymentTerm: null,
+  calculatedFee: 2,
 };
 
 export const useTransactionStore = create<TransactionState & TransactionActions>()(
@@ -95,6 +105,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     escrowFunded: false,
     documentsUploaded: false,
     documentsVerified: false,
+    financingConfirmed: false,
 
     setUserRole: (role) =>
       set((state) => {
@@ -131,6 +142,11 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         state.documentsVerified = verified;
       }),
 
+    setFinancingConfirmed: (confirmed) =>
+      set((state) => {
+        state.financingConfirmed = confirmed;
+      }),
+
     resetTransaction: () =>
       set((state) => {
         state.userRole = null;
@@ -140,6 +156,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         state.escrowFunded = false;
         state.documentsUploaded = false;
         state.documentsVerified = false;
+        state.financingConfirmed = false;
       }),
   }))
 );

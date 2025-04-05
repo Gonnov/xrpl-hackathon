@@ -61,14 +61,20 @@ const transactionData = {
 
 export const Notification = () => {
   const navigate = useNavigate();
-  const { userRole, setConfirmed } = useTransactionStore();
+  const { userRole, details, setConfirmed } = useTransactionStore();
 
   const handleContinue = () => {
     setConfirmed(true);
     
     if (userRole === 'Importer') {
-      navigate('/payment');
+      // Route based on funding method for importers
+      if (details.fundingMethod === 'financed') {
+        navigate('/financing');
+      } else {
+        navigate('/payment');
+      }
     } else {
+      // Exporters always go to documents
       navigate('/documents');
     }
   };

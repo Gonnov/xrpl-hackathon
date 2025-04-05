@@ -1,18 +1,61 @@
 import React from "react";
-import { Check, FileText, Bell, FileSearch, ClipboardList } from "lucide-react";
+import { Check, FileText, Bell, FileSearch, ClipboardList, Wallet, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
+import { useTransactionStore } from "@/stores/useTransactionStore";
 
-const steps = [
-  { id: 1, name: "Contract", icon: FileText, path: "/contract" },
-  { id: 2, name: "Notification", icon: Bell, path: "/notification" },
-  { id: 3, name: "Documents", icon: ClipboardList, path: "/" },
-  { id: 4, name: "Verification", icon: FileSearch, path: "/verification" },
-  { id: 5, name: "Summary", icon: Check, path: "/summary" },
-];
+interface Step {
+  id: number;
+  name: string;
+  icon: React.ElementType;
+  path: string;
+}
 
 export const DocumentStepper = (): JSX.Element => {
   const location = useLocation();
+  const { userRole, details } = useTransactionStore();
+
+  const getSteps = (): Step[] => {
+    // Default first step (always shown)
+    const baseSteps: Step[] = [
+      { id: 1, name: "Contract", icon: FileText, path: "/contract" },
+    ];
+
+    // If no role selected yet, return only the first step
+    if (!userRole) {
+      return baseSteps;
+    }
+
+    // Add notification step (common for both roles)
+    baseSteps.push({ id: 2, name: "Notification", icon: Bell, path: "/notification" });
+
+    // Different flows based on role and funding method
+    if (userRole === "Exporter") {
+      return [
+        ...baseSteps,
+        { id: 3, name: "Documents", icon: ClipboardList, path: "/documents" },
+        { id: 4, name: "Verification", icon: FileSearch, path: "/verification" },
+        { id: 5, name: "Summary", icon: Check, path: "/summary" },
+      ];
+    } else {
+      // Importer flow
+      if (details.fundingMethod === "financed") {
+        return [
+          ...baseSteps,
+          { id: 3, name: "Financing", icon: CreditCard, path: "/payment" },
+          { id: 4, name: "Summary", icon: Check, path: "/summary" },
+        ];
+      } else {
+        return [
+          ...baseSteps,
+          { id: 3, name: "Payment", icon: Wallet, path: "/payment" },
+          { id: 4, name: "Summary", icon: Check, path: "/summary" },
+        ];
+      }
+    }
+  };
+
+  const steps = getSteps();
 
   const getStepStatus = (stepPath: string, index: number) => {
     const currentStepIndex = steps.findIndex(step => step.path === location.pathname);
@@ -45,7 +88,7 @@ export const DocumentStepper = (): JSX.Element => {
                   {getStepStatus(step.path, stepIdx) === "complete" ? (
                     <Check className="h-4 w-4" />
                   ) : (
-                    stepIdx + 1
+                    <step.icon className="h-4 w-4" />
                   )}
                 </span>
                 <span

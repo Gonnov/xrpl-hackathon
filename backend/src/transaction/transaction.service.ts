@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 export class TransactionService {
   private readonly logger = new Logger(TransactionService.name);
 
-  async getTransactionById(transaction_id: string, business_partner: string, product_name:string, quantity: string, price: string) {
+  async createTransactionInDb(transaction_id: string, business_partner: string, product_name:string, quantity: string, price: string) {
     try {
       const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
       const { data, error } = await supabase

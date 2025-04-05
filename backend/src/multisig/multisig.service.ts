@@ -63,16 +63,17 @@ export class MultisigService {
               });
             const signed = mainWallet.sign(prepared);
             const tx = await client.submitAndWait(signed.tx_blob);
+            console.log('Transaction Submit Result', tx);
             const preparedPayment = await client.autofill({
                 TransactionType: "Payment",
                 Account: mainWallet.classicAddress,
                 Destination: RECEIVER_ADDRESS!,
-                Amount: '0.1'
+                Amount: '1'
             }, 3);
-            const signed1 = mainWallet.sign(preparedPayment);
-            const signed2 = signer_wallet.sign(preparedPayment);
-            const signed3 = issuer_wallet.sign(preparedPayment);
-            const combinedTransaction = multisign([signed1.tx_blob, signed2.tx_blob, signed3.tx_blob]);
+            // const signed1 = mainWallet.sign(preparedPayment, true);
+            const signed2 = signer_wallet.sign(preparedPayment, true);
+            const signed3 = issuer_wallet.sign(preparedPayment, true);
+            const combinedTransaction = multisign([signed2.tx_blob, signed3.tx_blob]);
             const result = await client.submitAndWait(combinedTransaction);
             console.log('Transaction Submit Result', result);
         }

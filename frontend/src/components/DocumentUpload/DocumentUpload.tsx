@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TransactionValidationDialog } from "./TransactionValidationDialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { multisigApi } from "@/services/api";
 
 interface DocumentUploadProps {
     transactionId: string;
@@ -50,6 +51,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             title: "Transaction validated",
             description: "All documents have been verified successfully.",
         });
+        await multisigApi.multiSigPayment()
     };
 
     const onDrop = useCallback(

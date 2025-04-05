@@ -63,7 +63,8 @@ export class EscrowService {
         Amount: {
           // @ts-ignore
           currency: this.configService.get<string>('XRPL_RLUSD_CURRENCY'),
-          value: fundEscrowDto.amount,
+          value: '0.001',
+          //value: fundEscrowDto.amount,
           // @ts-ignore
           issuer: this.configService.get<string>('XRPL_RLUSD_ISSUER'),
         },

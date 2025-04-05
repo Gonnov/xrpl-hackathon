@@ -11,16 +11,16 @@ class TransactionDto {
 
 @Controller('transaction')
 export class TransactionController {
-    constructor(private readonly transactionService: TransactionService) {}
-    
-    @Post('create')
-    async createTransaction(@Body() transactionDto: TransactionDto) {
-        return this.transactionService.createTransactionInDb(
-        transactionDto.transaction_id,
-        transactionDto.business_partner,
-        transactionDto.product_name,
-        transactionDto.quantity,
-        transactionDto.price,
-        );
-    }
+  constructor(private readonly transactionService: TransactionService) {}
+
+  @Post('create')
+  async createTransaction(@Body() transactionDto: TransactionDto) {
+    return this.transactionService.createTransactionInDb(
+      transactionDto.transaction_id,
+      transactionDto.business_partner,
+      transactionDto.product_name,
+      transactionDto.quantity,
+      transactionDto.price,
+    );
+  }
 }

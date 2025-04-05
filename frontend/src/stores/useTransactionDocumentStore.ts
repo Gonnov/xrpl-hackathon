@@ -8,6 +8,11 @@ interface Document {
     size: number;
     uploadedAt: Date;
     status: "pending" | "verified";
+    documentType:
+        | "invoice"
+        | "bill_of_lading"
+        | "packing_list"
+        | "certificate_of_origin";
 }
 
 interface TransactionDocument {
@@ -16,22 +21,78 @@ interface TransactionDocument {
     isValidated: boolean;
 }
 
+interface DocumentTypeConfig {
+    type:
+        | "invoice"
+        | "bill_of_lading"
+        | "packing_list"
+        | "certificate_of_origin";
+    label: string;
+    description: string;
+    required: boolean;
+}
+
+const DOCUMENT_TYPES: DocumentTypeConfig[] = [
+    {
+        type: "invoice",
+        label: "Commercial Invoice",
+        description: "Official commercial invoice for the transaction",
+        required: true,
+    },
+    {
+        type: "bill_of_lading",
+        label: "Bill of Lading",
+        description: "Transport document for shipped goods",
+        required: true,
+    },
+    {
+        type: "packing_list",
+        label: "Packing List",
+        description: "Detailed list of shipped items",
+        required: true,
+    },
+    {
+        type: "certificate_of_origin",
+        label: "Certificate of Origin",
+        description: "Document certifying the origin of goods",
+        required: false,
+    },
+];
+
 interface TransactionDocumentState {
     transactions: TransactionDocument[];
-    addDocument: (transactionId: string, file: File) => void;
-    addDocuments: (transactionId: string, files: File[]) => void;
+    addDocument: (
+        transactionId: string,
+        file: File,
+        documentType: DocumentTypeConfig["type"]
+    ) => void;
+    addDocuments: (
+        transactionId: string,
+        files: File[],
+        documentType: DocumentTypeConfig["type"]
+    ) => void;
     verifyDocument: (transactionId: string, documentId: string) => void;
     validateTransaction: (transactionId: string) => void;
     getDocuments: (transactionId: string) => Document[];
+    getDocumentsByType: (
+        transactionId: string,
+        documentType: DocumentTypeConfig["type"]
+    ) => Document[];
     isTransactionValidated: (transactionId: string) => boolean;
+    canValidateTransaction: (transactionId: string) => boolean;
     removeDocument: (transactionId: string, documentId: string) => void;
+    getDocumentTypes: () => DocumentTypeConfig[];
 }
 
 export const useTransactionDocumentStore = create<TransactionDocumentState>()(
     immer((set, get) => ({
         transactions: [],
 
-        addDocument: (transactionId: string, file: File) => {
+        addDocument: (
+            transactionId: string,
+            file: File,
+            documentType: DocumentTypeConfig["type"]
+        ) => {
             set((state) => {
                 const transactionIndex = state.transactions.findIndex(
                     (td) => td.transactionId === transactionId
@@ -44,6 +105,7 @@ export const useTransactionDocumentStore = create<TransactionDocumentState>()(
                     size: file.size,
                     uploadedAt: new Date(),
                     status: "pending",
+                    documentType,
                 };
 
                 if (transactionIndex === -1) {
@@ -62,7 +124,11 @@ export const useTransactionDocumentStore = create<TransactionDocumentState>()(
             });
         },
 
-        addDocuments: (transactionId: string, files: File[]) => {
+        addDocuments: (
+            transactionId: string,
+            files: File[],
+            documentType: DocumentTypeConfig["type"]
+        ) => {
             set((state) => {
                 const transactionIndex = state.transactions.findIndex(
                     (td) => td.transactionId === transactionId
@@ -75,6 +141,7 @@ export const useTransactionDocumentStore = create<TransactionDocumentState>()(
                     size: file.size,
                     uploadedAt: new Date(),
                     status: "pending",
+                    documentType,
                 }));
 
                 if (transactionIndex === -1) {
@@ -129,6 +196,31 @@ export const useTransactionDocumentStore = create<TransactionDocumentState>()(
             );
             return transaction?.documents || [];
         },
+
+        getDocumentsByType: (
+            transactionId: string,
+            documentType: DocumentTypeConfig["type"]
+        ) => {
+            const documents = get().getDocuments(transactionId);
+            return documents.filter((doc) => doc.documentType === documentType);
+        },
+
+        canValidateTransaction: (transactionId: string) => {
+            const documents = get().getDocuments(transactionId);
+            // Check if we have at least one document for each required type
+            const hasAllRequiredDocuments = DOCUMENT_TYPES.every((docType) => {
+                if (!docType.required) return true;
+                const hasDocument = documents.some(
+                    (doc) =>
+                        doc.documentType === docType.type &&
+                        doc.status === "pending" // Changed from 'verified' to 'pending' since we verify on validation
+                );
+                return hasDocument;
+            });
+            return hasAllRequiredDocuments && documents.length > 0;
+        },
+
+        getDocumentTypes: () => DOCUMENT_TYPES,
 
         isTransactionValidated: (transactionId: string) => {
             const transaction = get().transactions.find(

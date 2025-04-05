@@ -51,9 +51,6 @@ export class EscrowService {
       const trustResult = await client.submitAndWait(
         wallet2.sign(trustline).tx_blob,
       );
-      this.logger.log(
-        `Trust line result: ${JSON.stringify(trustResult.result.meta.TransactionResult)}`,
-      );
 
       // Prepare payment
       // @ts-ignore
@@ -77,22 +74,14 @@ export class EscrowService {
       this.logger.log(`Transaction hash: ${signed.hash}`);
 
       const result = await client.submitAndWait(signed.tx_blob);
-      this.logger.log(
-        `Payment result: ${JSON.stringify(result.result.meta.TransactionResult)}`,
-      );
 
       console.log('result', result);
 
       await client.disconnect();
 
       return {
-        status: 'success',
-        message: 'Transaction completed',
-        data: {
-          trustlineStatus: trustResult.result.meta.TransactionResult,
-          paymentStatus: result.result.meta.TransactionResult,
-          transactionHash: result.result.hash,
-        },
+        success: true,
+        result
       };
     } catch (error) {
       console.log('Payment failed:', error);

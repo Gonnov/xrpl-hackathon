@@ -7,7 +7,6 @@ export class TransactionService {
 
   async createTransactionInDb(
     transaction_id: string,
-    business_partner: string,
     product_name: string,
     quantity: string,
     price: string,
@@ -21,7 +20,6 @@ export class TransactionService {
         .from('transactions')
         .insert({
           transaction_id,
-          business_partner,
           product_name,
           quantity,
           price,
@@ -30,6 +28,24 @@ export class TransactionService {
       return data;
     } catch (error) {
       this.logger.error(`Error fetching transaction: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getAllTransactions() {
+    try {
+      const supabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+      );
+      const { data, error } = await supabase.from('transactions').select('*');
+      if (error) {
+        this.logger.error(`Error fetching transactions: ${error.message}`);
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      this.logger.error(`Error fetching transactions: ${error.message}`);
       throw error;
     }
   }

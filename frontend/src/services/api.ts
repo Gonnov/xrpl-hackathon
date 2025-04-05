@@ -29,5 +29,9 @@ export const transactionApi = {
     }) => {
         const response = await api.post("/transaction/create", data);
         return response.data;
+    },
+    getAllTransactions: async () => {
+        const response = await api.get("/transaction/get_transactions");
+        return response.data;
     }
 };

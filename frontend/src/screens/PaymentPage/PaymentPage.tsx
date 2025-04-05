@@ -46,13 +46,14 @@ export const PaymentPage = () => {
 
     const handleFundEscrow = async () => {
         setIsLoading(true);
+        console.log("Funding escrow with details:", details);
         try {
             // Call the backend API
             const response = await escrowApi.fundEscrow({
                 amount: details.contractValue.toString(),
                 currency: details.currency || "EUR",
             });
-            console.log(response);
+            // console.log(response);
             setEscrowFunded(true);
             toast({
                 title: "Escrow funded successfully",
@@ -60,12 +61,12 @@ export const PaymentPage = () => {
                     "Your payment has been processed and the funds are now in escrow.",
             });
             // Create transaction record
+            // console.log(response.result.result.hash);
             await transactionApi.createTransaction({
-                transaction_id: response.transaction_id,
-                business_partner: partner.name,
+                transaction_id: response.result.result.hash,
                 product_name: details.productName,
                 quantity: details.quantity,
-                price: details.contractValue,
+                price: details.unitPrice,
             });
             setIsLoading(false);
 

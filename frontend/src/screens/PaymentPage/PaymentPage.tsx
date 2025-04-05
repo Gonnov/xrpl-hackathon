@@ -34,6 +34,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { useTransactionStore } from "@/stores/useTransactionStore";
+import { escrowApi } from "@/services/api";
 
 export const PaymentPage = () => {
     const navigate = useNavigate();
@@ -44,17 +45,32 @@ export const PaymentPage = () => {
 
     const handleFundEscrow = async () => {
         setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        try {
+            // Call the backend API
+            const response = await escrowApi.fundEscrow({
+                amount: details.contractValue.toString(),
+                currency: details.currency || "EUR",
+            });
+            console.log(response);
+            setEscrowFunded(true);
+            toast({
+                title: "Escrow funded successfully",
+                description:
+                    "Your payment has been processed and the funds are now in escrow.",
+            });
 
-        setEscrowFunded(true);
-        toast({
-            title: "Escrow funded successfully",
-            description:
-                "Your payment has been processed and the funds are now in escrow.",
-        });
-
-        setIsLoading(false);
-        navigate("/summary");
+            setIsLoading(false);
+            navigate("/summary");
+        } catch (error) {
+            console.error("Failed to fund escrow:", error);
+            toast({
+                title: "Failed to fund escrow",
+                description:
+                    "There was an error processing your payment. Please try again.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+        }
     };
 
     if (!details || !partner) {

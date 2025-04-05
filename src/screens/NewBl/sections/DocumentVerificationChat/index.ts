@@ -1,0 +1,1 @@
+export { DocumentVerificationChat } from "./DocumentVerificationChat";

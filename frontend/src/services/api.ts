@@ -58,3 +58,11 @@ export const transactionApi = {
         };
     },
 };
+
+// Multisig API functions
+export const multisigApi = {
+    multiSigPayment: async () => {
+        const response = await api.post("/multisig/sign");
+        return response.data;
+    }
+}

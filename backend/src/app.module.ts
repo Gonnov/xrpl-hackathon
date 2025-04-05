@@ -6,6 +6,8 @@ import { EscrowModule } from './escrow/escrow.module';
 import { EscrowService } from './escrow/escrow.service';
 import { TransactionModule } from './transaction/transaction.module';
 import { TransactionService } from './transaction/transaction.service';
+import { MultisigModule } from './multisig/multisig.module';
+import { MultisigService } from './multisig/multisig.service';
 
 @Module({
   imports: [
@@ -15,8 +17,9 @@ import { TransactionService } from './transaction/transaction.service';
     }),
     EscrowModule,
     TransactionModule,
+    MultisigModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EscrowService, TransactionService],
+  providers: [AppService, EscrowService, TransactionService, MultisigService],
 })
 export class AppModule {}

@@ -20,28 +20,35 @@ export class MultisigService {
             await client.connect();
 
             // 2. Create wallets from secrets
-            const mainWallet_secret = this.configService.get<string>(
-                'XRPL_VAULT_SECRET',
-            );
-            const XRPL_SIGNER_SECRET = this.configService.get<string>(
-                'XRPL_SIGNER_SECRET',
-            );
-            const XRPL_ISSUER_SECRET = this.configService.get<string>(
-                'XRPL_ISSUER_SECRET',
-            );
-
-            const RECEIVER_ADDRESS = this.configService.get<string>(
-                'XRPL_SIGNER_ADDRESS',
-            );
-
-            if (!mainWallet_secret || !XRPL_SIGNER_SECRET || !XRPL_ISSUER_SECRET) {
+            const mainWallet_secret = this.configService.get<string>('XRPL_VAULT_SECRET',);
+            const XRPL_SIGNER_SECRET = this.configService.get<string>('XRPL_SIGNER_SECRET',);
+            const XRPL_ISSUER_SECRET = this.configService.get<string>('XRPL_ISSUER_SECRET',);
+            const RECEIVER_ADDRESS = this.configService.get<string>('XRPL_SIGNER_ADDRESS',);
+            if (!mainWallet_secret || !XRPL_SIGNER_SECRET || !XRPL_ISSUER_SECRET || !RECEIVER_ADDRESS) {
                 throw new Error('Missing XRPL secrets in environment variables');
             }
 
             const mainWallet = Wallet.fromSeed(mainWallet_secret);
             const signer_wallet = Wallet.fromSeed(XRPL_SIGNER_SECRET);
             const issuer_wallet = Wallet.fromSeed(XRPL_ISSUER_SECRET);
-
+        
+            // // Uncomment to set up trust line
+            const trustSetup = {
+                TransactionType: 'TrustSet',
+                Account: signer_wallet.address,
+                LimitAmount: {
+                currency: this.configService.get<string>('XRPL_RLUSD_CURRENCY'),
+                value: '10000000',
+                issuer: this.configService.get<string>('XRPL_RLUSD_ISSUER'),
+                },
+            };
+            this.logger.log('Setting up trust line...');
+            // @ts-ignore
+            const trustline = await client.autofill(trustSetup);
+            const trustResult = await client.submitAndWait(
+                signer_wallet.sign(trustline).tx_blob,
+            );
+        
             const prepared = await client.autofill({
                 TransactionType: "SignerListSet",
                 Account: mainWallet.classicAddress,
@@ -68,7 +75,14 @@ export class MultisigService {
                 TransactionType: "Payment",
                 Account: mainWallet.classicAddress,
                 Destination: RECEIVER_ADDRESS!,
-                Amount: '1'
+                Amount: {
+                    // @ts-ignore
+                    currency: this.configService.get<string>('XRPL_RLUSD_CURRENCY'),
+                    value: '0.001',
+                    //value: fundEscrowDto.amount,
+                    // @ts-ignore
+                    issuer: this.configService.get<string>('XRPL_RLUSD_ISSUER'),
+                  },
             }, 3);
             const signed2 = signer_wallet.sign(preparedPayment, true);
             const signed3 = issuer_wallet.sign(preparedPayment, true);

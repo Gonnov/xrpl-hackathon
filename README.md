@@ -17,14 +17,17 @@ This system facilitates secure transactions between buyers and sellers using XRP
 -   **UI Components**: ShadCN
 -   **Database**: Supabase
 -   **Smart Contract Platform**: XRPL
+-   **Stablecoin**: RLUSD (XRP Ledger USD)
 
 ## Key Features
 
 -   Secure RLUSD stablecoin transactions
 -   Document management system with validation
--   Multi-signature release mechanism
+-   Multi-signature release mechanism (2-of-3 signers)
 -   Real-time transaction status tracking
 -   Automated escrow vault management
+-   Trust line management for RLUSD
+-   Atomic swaps between RLUSD and XRP
 
 ## Required Documents
 
@@ -32,6 +35,126 @@ This system facilitates secure transactions between buyers and sellers using XRP
 -   Bill of Lading (Required)
 -   Packing List (Required)
 -   Certificate of Origin (Optional)
+
+## Technical Workflow
+
+1. **Trust Line Setup**
+
+    ```typescript
+    // Set up trust line for RLUSD
+    const trustSetup = {
+        TransactionType: "TrustSet",
+        Account: signer_wallet.address,
+        LimitAmount: {
+            currency: "RLUSD",
+            value: "10000000",
+            issuer: RLUSD_ISSUER,
+        },
+    };
+    ```
+
+2. **Multi-Signature Configuration**
+
+    ```typescript
+    // Configure 2-of-3 multi-signature
+    const signerListSet = {
+        TransactionType: "SignerListSet",
+        Account: mainWallet.classicAddress,
+        SignerQuorum: 2,
+        SignerEntries: [
+            {
+                SignerEntry: {
+                    Account: signer_wallet.classicAddress,
+                    SignerWeight: 1,
+                },
+            },
+            {
+                SignerEntry: {
+                    Account: issuer_wallet.classicAddress,
+                    SignerWeight: 1,
+                },
+            },
+        ],
+    };
+    ```
+
+3. **Payment Process**
+
+    ```typescript
+    // Multi-signature payment transaction
+    const payment = {
+        TransactionType: "Payment",
+        Account: mainWallet.classicAddress,
+        Destination: RECEIVER_ADDRESS,
+        Amount: {
+            currency: "RLUSD",
+            value: "0.001",
+            issuer: RLUSD_ISSUER,
+        },
+    };
+    ```
+
+4. **RLUSD to XRP Swap**
+    ```typescript
+    // Create immediate swap offer
+    const swapTx = {
+        TransactionType: "OfferCreate",
+        Account: signer_wallet.address,
+        TakerGets: "5000000", // 5 XRP
+        TakerPays: {
+            currency: "RLUSD",
+            value: "1",
+            issuer: RLUSD_ISSUER,
+        },
+        Flags: 0x00080000, // tfImmediateOrCancel
+    };
+    ```
+
+## Transaction Flow Details
+
+1. **Trust Line Initialization**
+
+    - System establishes trust line for RLUSD
+    - Sets maximum limit for token transfers
+    - Enables wallet to hold RLUSD tokens
+
+2. **Multi-Signature Setup**
+
+    - Configures 2-of-3 multi-signature requirement
+    - Assigns signing weights to authorized parties
+    - Establishes quorum threshold
+
+3. **Payment Processing**
+
+    - Buyer initiates RLUSD payment
+    - Funds are held in multi-signature escrow
+    - Multiple signatures required for release
+
+4. **Document Validation**
+
+    - Seller uploads required documents
+    - System validates document completeness
+    - Documents are verified by authorized parties
+
+5. **Fund Release**
+
+    - Multi-signature approval triggers release
+    - Funds transferred to seller's wallet
+    - Optional RLUSD to XRP conversion
+
+6. **Currency Conversion**
+    - Immediate or cancel swap mechanism
+    - Direct order book interaction
+    - Atomic transaction execution
+
+## Security Features
+
+-   Multi-signature (2-of-3) requirement
+-   Trust line limits for RLUSD
+-   Immediate-or-cancel swap protection
+-   Document verification system
+-   Row Level Security in Supabase
+-   Environment variable protection
 
 ## Setup
 
@@ -44,6 +167,8 @@ XRPL_ISSUER_SECRET=<Issuer wallet secret>
 XRPL_ISSUER_ADDRESS=<Issuer wallet address>
 XRPL_VAULT_SECRET=<Vault wallet secret>
 XRPL_VAULT_ADDRESS=<Vault wallet address>
+XRPL_SIGNER_SECRET=<Signer wallet secret>
+XRPL_SIGNER_ADDRESS=<Signer wallet address>
 XRPL_RLUSD_ISSUER=<RLUSD issuer address>
 XRPL_RLUSD_CURRENCY=<RLUSD currency code>
 SUPABASE_URL=<Supabase project URL>
@@ -73,40 +198,6 @@ npm run start:dev
 cd frontend
 npm run dev
 ```
-
-## Transaction Flow
-
-1. **Initiation**
-
-    - Buyer creates transaction with product and payment details
-    - System generates unique transaction ID
-
-2. **Escrow Funding**
-
-    - Buyer sends RLUSD to the vault
-    - Funds are locked in escrow
-
-3. **Document Upload**
-
-    - Seller uploads required transaction documents
-    - System validates document completeness
-
-4. **Verification**
-
-    - Documents are verified by relevant parties
-    - Multi-signature approval is required
-
-5. **Fund Release**
-    - Upon successful verification, funds are released to seller
-    - Transaction is marked as complete
-
-## Security Features
-
--   Secure vault implementation on XRPL
--   Multi-signature requirement for fund release
--   Document verification system
--   Row Level Security in Supabase
--   Environment variable protection
 
 ## Development
 

@@ -32,7 +32,7 @@ export class MultisigService {
             const signer_wallet = Wallet.fromSeed(XRPL_SIGNER_SECRET);
             const issuer_wallet = Wallet.fromSeed(XRPL_ISSUER_SECRET);
         
-            // // Uncomment to set up trust line
+            //Set up trust line
             const trustSetup = {
                 TransactionType: 'TrustSet',
                 Account: signer_wallet.address,
@@ -49,6 +49,7 @@ export class MultisigService {
                 signer_wallet.sign(trustline).tx_blob,
             );
         
+            // Create a multisig transaction
             const prepared = await client.autofill({
                 TransactionType: "SignerListSet",
                 Account: mainWallet.classicAddress,
@@ -71,6 +72,7 @@ export class MultisigService {
             const signed = mainWallet.sign(prepared);
             const tx = await client.submitAndWait(signed.tx_blob);
             console.log('Transaction Submit Result', tx);
+            // Create a payment transaction
             const preparedPayment = await client.autofill({
                 TransactionType: "Payment",
                 Account: mainWallet.classicAddress,

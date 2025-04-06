@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 export class TransactionService {
   private readonly logger = new Logger(TransactionService.name);
 
+  // Inserte transaction into the database
   async createTransactionInDb(
     transaction_id: string,
     product_name: string,
@@ -32,6 +33,7 @@ export class TransactionService {
     }
   }
 
+  // Fetch all transactions from the database
   async getAllTransactions() {
     try {
       const supabase = createClient(
